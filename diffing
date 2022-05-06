@@ -14,6 +14,31 @@ import textwrap
 from pathlib import Path
 
 
+def is_strict_already(attr: str, nixgits: Path) -> bool:
+    """check if strictDeps is enabled already"""
+    strict_nixpkgs = Path(f"{nixgits}/my-nixpkgs")
+    os.chdir(strict_nixpkgs)
+    strict_deps_status = (
+        subprocess.check_output(
+            [
+                "nix",
+                "eval",
+                "--impure",
+                "--expr",
+                "with import ./. {}; "
+                f"if ({attr} ? strictDeps) then {attr}.strictDeps else false",
+            ]
+        )
+        .decode()
+        .strip()
+    )
+
+    if strict_deps_status == "true":
+        return True
+
+    return False
+
+
 def get_outputs(attr: str, nixgits: Path) -> tuple[dict[str, str], dict[str, str]]:
     """get json from nix build and convert it class objects"""
     nixpkgs = Path(f"{nixgits}/nixpkgs")
@@ -24,7 +49,6 @@ def get_outputs(attr: str, nixgits: Path) -> tuple[dict[str, str], dict[str, str
         [
             "nix",
             "build",
-            "--no-link",
             "--json",
             "--impure",
             "--expr",
@@ -40,7 +64,6 @@ def get_outputs(attr: str, nixgits: Path) -> tuple[dict[str, str], dict[str, str
         [
             "nix",
             "build",
-            "--no-link",
             "--json",
             "--impure",
             "--expr",
@@ -81,11 +104,16 @@ def main() -> None:
 
     print(attrs)
     for attr in attrs:
+        if is_strict_already(attr, Path(nixgits)):
+            txt = f"{attr} has strictDeps enabled already!".center(100, "-")
+            print(txt)
+            continue
+
         outputs, outputs_strict = get_outputs(attr, Path(nixgits))
 
         for output_name, output_path in outputs.items():
             outputs_strict_path = outputs_strict[output_name]
-            txt = f"diffing output {output_name}".center(150, "-")
+            txt = f"diffing output {output_name}".center(100, "-")
             print(txt)
             print(f"normal: {output_path}")
             print(f"strict: {outputs_strict_path}")
