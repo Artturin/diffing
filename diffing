@@ -102,21 +102,23 @@ def main() -> None:
     else:
         attrs = [a.replace(".#", "") for a in args.attrs]
 
-    print(attrs)
+    print(f"{attrs}\n")
     for attr in attrs:
         if is_strict_already(attr, Path(nixgits)):
             txt = f"{attr} has strictDeps enabled already!".center(100, "-")
             print(txt)
+            print()
             continue
 
         outputs, outputs_strict = get_outputs(attr, Path(nixgits))
 
         for output_name, output_path in outputs.items():
             outputs_strict_path = outputs_strict[output_name]
-            txt = f"diffing output {output_name}".center(100, "-")
+            txt = f"diffing output {output_name} of {attr}".center(100, "-")
             print(txt)
             print(f"normal: {output_path}")
             print(f"strict: {outputs_strict_path}")
+            print()
 
             subprocess.run(
                 ["diffoscope", output_path, outputs_strict_path], check=False
