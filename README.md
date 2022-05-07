@@ -2,9 +2,11 @@
 find strictDeps problems
 
 
-point the NIXGITS env var to a directory containing nixpkgs and my-nixpkgs
+point the NIXGITS env var to a directory containing 2 nixpkgs directories called nixpkgs and my-nixpkgs
 
-my-nixpkgs will be the one you commit strictDeps fixes to
+`diffing ".#bash"`
+will build bash in both repositories and then diff their outputs
+this is to allow you to make changes in `my-nixpkgs` and then run diffing again
 
 
 ## usage
