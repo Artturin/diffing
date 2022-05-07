@@ -92,7 +92,11 @@ def main() -> None:
     )
     parser.add_argument("attrs", nargs="*")
     parser.add_argument("--file", help="a file containing attrs")
-    parser.add_argument("--force", help="diff even if strictDeps is already enabled")
+    parser.add_argument(
+        "--force",
+        help="diff even if strictDeps is already enabled",
+        action="store_true",
+    )
     args = parser.parse_args()
     attrs: list[str] = []
     if args.file:
