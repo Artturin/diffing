@@ -79,7 +79,7 @@ def get_outputs(attr: str, nixgits: Path) -> tuple[dict[str, str], dict[str, str
 
 def main() -> None:
     """main"""
-    nixgits = os.getenv("NIXGITS") or f"${os.getenv('HOME')}/nixgits"
+    nixgits = os.getenv("NIXGITS") or f"{os.getenv('HOME')}/nixgits"
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent(
