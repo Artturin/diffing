@@ -92,6 +92,7 @@ def main() -> None:
     )
     parser.add_argument("attrs", nargs="*")
     parser.add_argument("--file", help="a file containing attrs")
+    parser.add_argument("--force", help="diff even if strictDeps is already enabled")
     args = parser.parse_args()
     attrs: list[str] = []
     if args.file:
@@ -101,11 +102,12 @@ def main() -> None:
 
     print(f"{attrs}\n")
     for attr in attrs:
-        if is_strict_already(attr, Path(nixgits)):
-            txt = f"{attr} has strictDeps enabled already!".center(100, "-")
-            print(txt)
-            print()
-            continue
+        if not args.force:
+            if is_strict_already(attr, Path(nixgits)):
+                txt = f"{attr} has strictDeps enabled already!".center(100, "-")
+                print(txt)
+                print()
+                continue
 
         outputs, outputs_strict = get_outputs(attr, Path(nixgits))
 
