@@ -1,6 +1,3 @@
-#!/usr/bin/env nix-shell
-#! nix-shell -p python310 -i python3
-# vim:ft=python
 """
 usage:
     diffing ".#bash"
