@@ -41,33 +41,44 @@ def get_outputs(attr: str, nixgits: Path) -> tuple[dict[str, str], dict[str, str
     nixpkgs = Path(f"{nixgits}/nixpkgs")
     strict_nixpkgs = Path(f"{nixgits}/my-nixpkgs")
 
-    os.chdir(strict_nixpkgs)
+    os.environ["diffNixpkgs"] = str(nixpkgs)
+    os.environ["diffStrictNixpkgs"] = str(strict_nixpkgs)
+    os.environ["diffAttr"] = attr
+
+    strict_expr = Path("@strictexpr@")
+    expr = Path("@expr@")
+
+    # os.chdir(strict_nixpkgs)
     output_strict = subprocess.check_output(
         [
             "nix",
             "build",
             "--json",
             "--impure",
-            "--expr",
-            "with import ./. {}; "
-            f"{attr}.overrideAttrs (oldAttrs: "
-            "{ strictDeps = true; meta = oldAttrs.meta // "
-            "lib.optionalAttrs (oldAttrs ? outputs )  { outputsToInstall = oldAttrs.outputs; }; })",
+            "-f",
+            strict_expr,
+            # "--expr",
+            # "with import ./. {}; "
+            # f"{attr}.overrideAttrs (oldAttrs: "
+            # "{ strictDeps = true; meta = oldAttrs.meta // "
+            # "lib.optionalAttrs (oldAttrs ? outputs )  { outputsToInstall = oldAttrs.outputs; }; })",
         ]
     )
 
-    os.chdir(nixpkgs)
+    # os.chdir(nixpkgs)
     output = subprocess.check_output(
         [
             "nix",
             "build",
             "--json",
             "--impure",
-            "--expr",
-            "with import ./. {}; "
-            f"{attr}.overrideAttrs (oldAttrs: "
-            "{ meta = oldAttrs.meta // "
-            "lib.optionalAttrs (oldAttrs ? outputs ) { outputsToInstall = oldAttrs.outputs; }; })",
+            "-f",
+            expr,
+            # "--expr",
+            # "with import ./. {}; "
+            # f"{attr}.overrideAttrs (oldAttrs: "
+            # "{ meta = oldAttrs.meta // "
+            # "lib.optionalAttrs (oldAttrs ? outputs ) { outputsToInstall = oldAttrs.outputs; }; })",
         ]
     )
 
