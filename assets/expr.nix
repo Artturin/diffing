@@ -3,7 +3,7 @@ let
   lib = pkgs.lib;
   attr = builtins.getEnv "diffAttr";
 in
-pkgs.${attr}.overrideAttrs (oldAttrs: { } // lib.optionalAttrs (oldAttrs ? meta)
+(lib.attrByPath (lib.splitString "." attr) (throw "none") pkgs).overrideAttrs (oldAttrs: { } // lib.optionalAttrs (oldAttrs ? meta)
   {
     meta = oldAttrs.meta // lib.optionalAttrs (oldAttrs ? outputs)
       { outputsToInstall = oldAttrs.outputs; };

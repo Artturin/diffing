@@ -3,7 +3,7 @@ let
   lib = pkgs.lib;
   attr = builtins.getEnv "diffAttr";
 in
-pkgs.${attr}.overrideAttrs (oldAttrs: {
+(lib.attrByPath (lib.splitString "." attr) (throw "none") pkgs).overrideAttrs (oldAttrs: {
   strictDeps = true;
 } // lib.optionalAttrs (oldAttrs ? meta)
   {
