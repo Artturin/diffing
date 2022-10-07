@@ -2,7 +2,9 @@
 find strictDeps problems
 
 
-point the NIXGITS env var to a directory containing 2 nixpkgs directories called nixpkgs and my-nixpkgs and are at the same rev
+point the NIXGITS env var to a directory containing a nixpkgs dir
+
+That repo will be compared to the current dir you're in so make sure both are at the same rev
 
 `diffing ".#bash"`
 will build bash in both repositories and then diff their outputs

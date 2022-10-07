@@ -13,7 +13,7 @@ from pathlib import Path
 
 def is_strict_already(attr: str, nixgits: Path) -> bool:
     """check if strictDeps is enabled already"""
-    strict_nixpkgs = Path(f"{nixgits}/my-nixpkgs")
+    strict_nixpkgs = Path.cwd()
     os.chdir(strict_nixpkgs)
     strict_deps_status = (
         subprocess.check_output(
@@ -39,7 +39,7 @@ def is_strict_already(attr: str, nixgits: Path) -> bool:
 def get_outputs(attr: str, nixgits: Path) -> tuple[dict[str, str], dict[str, str]]:
     """get json from nix build and convert it class objects"""
     nixpkgs = Path(f"{nixgits}/nixpkgs")
-    strict_nixpkgs = Path(f"{nixgits}/my-nixpkgs")
+    strict_nixpkgs = Path.cwd()
 
     os.environ["diffNixpkgs"] = str(nixpkgs)
     os.environ["diffStrictNixpkgs"] = str(strict_nixpkgs)
