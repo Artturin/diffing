@@ -36,15 +36,15 @@ def is_strict_already(attr: str, nixgits: Path) -> bool:
     return False
 
 
-def get_outputs_strict(pr: int, attr: str) -> bytes:
+def get_outputs_strict(p_r: int, attr: str) -> bytes:
     strict_expr = Path("@strictexpr@")
 
-    if pr != 0:
+    if p_r != 0:
         output_strict_1 = subprocess.run(
             [
                 "nixpkgs-review",
                 "pr",
-                str(pr),
+                str(p_r),
                 "-p",
                 attr,
                 "--run",
@@ -96,7 +96,7 @@ def get_outputs_strict(pr: int, attr: str) -> bytes:
 
 
 def get_outputs(
-    attr: str, nixgits: Path, pr: int
+    attr: str, nixgits: Path, p_r: int
 ) -> tuple[dict[str, str], dict[str, str]]:
     """get json from nix build and convert it class objects"""
     nixpkgs = Path(f"{nixgits}/nixpkgs")
@@ -108,7 +108,7 @@ def get_outputs(
 
     expr = Path("@expr@")
 
-    output_strict = get_outputs_strict(pr, attr)
+    output_strict = get_outputs_strict(p_r, attr)
 
     output = subprocess.check_output(
         [
