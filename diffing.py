@@ -36,7 +36,68 @@ def is_strict_already(attr: str, nixgits: Path) -> bool:
     return False
 
 
-def get_outputs(attr: str, nixgits: Path) -> tuple[dict[str, str], dict[str, str]]:
+def get_outputs_strict(pr: int, attr: str) -> bytes:
+    strict_expr = Path("@strictexpr@")
+
+    if pr != 0:
+        output_strict_1 = subprocess.run(
+            [
+                "nixpkgs-review",
+                "pr",
+                str(pr),
+                "-p",
+                attr,
+                "--run",
+                f"echo -n 'STOREPATH=' && readlink -f ./results/{attr}",
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+        output_strict_2 = subprocess.run(
+            ["grep", "^STOREPATH"],
+            check=True,
+            input=output_strict_1.stdout,
+            stdout=subprocess.PIPE,
+        )
+        output_strict_3 = subprocess.run(
+            ["sed", "s/STOREPATH=//"],
+            check=True,
+            input=output_strict_2.stdout,
+            stdout=subprocess.PIPE,
+        )
+        output_strict_4 = subprocess.run(
+            ["nix", "derivation", "show", "--stdin"],
+            check=True,
+            input=output_strict_3.stdout,
+            stdout=subprocess.PIPE,
+        )
+        # for converting 'nix derivation show' output to 'nix build --json' compatible output
+        # derivation show '.[] | .outputs'
+        # { "out": { "path": "/nix/store/..."} }
+        # nix build '.[] | .outputs'
+        # { "out": "/nix/store/..." }
+        output_strict = subprocess.check_output(
+            ["jq", ".[] | .outputs | [{ outputs: map_values(.path)}]"],
+            input=output_strict_4.stdout,
+        )
+    else:
+        output_strict = subprocess.check_output(
+            [
+                "nix",
+                "build",
+                "--json",
+                "--impure",
+                "-f",
+                strict_expr,
+            ]
+        )
+
+    return output_strict
+
+
+def get_outputs(
+    attr: str, nixgits: Path, pr: int
+) -> tuple[dict[str, str], dict[str, str]]:
     """get json from nix build and convert it class objects"""
     nixpkgs = Path(f"{nixgits}/nixpkgs")
     strict_nixpkgs = Path.cwd()
@@ -45,27 +106,10 @@ def get_outputs(attr: str, nixgits: Path) -> tuple[dict[str, str], dict[str, str
     os.environ["diffStrictNixpkgs"] = str(strict_nixpkgs)
     os.environ["diffAttr"] = attr
 
-    strict_expr = Path("@strictexpr@")
     expr = Path("@expr@")
 
-    # os.chdir(strict_nixpkgs)
-    output_strict = subprocess.check_output(
-        [
-            "nix",
-            "build",
-            "--json",
-            "--impure",
-            "-f",
-            strict_expr,
-            # "--expr",
-            # "with import ./. {}; "
-            # f"{attr}.overrideAttrs (oldAttrs: "
-            # "{ strictDeps = true; meta = oldAttrs.meta // "
-            # "lib.optionalAttrs (oldAttrs ? outputs )  { outputsToInstall = oldAttrs.outputs; }; })",
-        ]
-    )
+    output_strict = get_outputs_strict(pr, attr)
 
-    # os.chdir(nixpkgs)
     output = subprocess.check_output(
         [
             "nix",
@@ -74,11 +118,6 @@ def get_outputs(attr: str, nixgits: Path) -> tuple[dict[str, str], dict[str, str
             "--impure",
             "-f",
             expr,
-            # "--expr",
-            # "with import ./. {}; "
-            # f"{attr}.overrideAttrs (oldAttrs: "
-            # "{ meta = oldAttrs.meta // "
-            # "lib.optionalAttrs (oldAttrs ? outputs ) { outputsToInstall = oldAttrs.outputs; }; })",
         ]
     )
 
@@ -103,6 +142,7 @@ def main() -> None:
     )
     parser.add_argument("attrs", nargs="*")
     parser.add_argument("--file", help="a file containing attrs")
+    parser.add_argument("--pr", help="pr to check, diffed as the strict nixpkgs")
     parser.add_argument(
         "--force",
         help="diff even if strictDeps is already enabled",
@@ -115,16 +155,19 @@ def main() -> None:
     else:
         attrs = [a.replace(".#", "") for a in args.attrs]
 
+    p_r = args.pr or 0
+
     print(f"{attrs}\n")
     for attr in attrs:
-        if not args.force:
+        # when pr is specified there should be no checking
+        if p_r == 0 and not args.force:
             if is_strict_already(attr, Path(nixgits)):
                 txt = f"{attr} has strictDeps enabled already!".center(100, "-")
                 print(txt)
                 print()
                 continue
 
-        outputs, outputs_strict = get_outputs(attr, Path(nixgits))
+        outputs, outputs_strict = get_outputs(attr, Path(nixgits), p_r)
 
         for output_name, output_path in outputs.items():
             outputs_strict_path = outputs_strict[output_name]
