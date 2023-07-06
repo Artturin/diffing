@@ -11,7 +11,7 @@ import textwrap
 from pathlib import Path
 
 
-def is_strict_already(attr: str, nixgits: Path) -> bool:
+def is_strict_already(attr: str) -> bool:
     """check if strictDeps is enabled already"""
     strict_nixpkgs = Path.cwd()
     os.chdir(strict_nixpkgs)
@@ -137,6 +137,7 @@ def main() -> None:
             usage:
                 diffing ".#bash"
                 diffing --file filecontainingattrs
+                diffing ".#bash" --pr *prnumber*
             """
         ),
     )
@@ -161,7 +162,7 @@ def main() -> None:
     for attr in attrs:
         # when pr is specified there should be no checking
         if p_r == 0 and not args.force:
-            if is_strict_already(attr, Path(nixgits)):
+            if is_strict_already(attr):
                 txt = f"{attr} has strictDeps enabled already!".center(100, "-")
                 print(txt)
                 print()
