@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import subprocess
+import sys
 import textwrap
 from pathlib import Path
 
@@ -40,19 +41,25 @@ def get_outputs_strict(p_r: int, attr: str) -> bytes:
     strict_expr = Path("@strictexpr@")
 
     if p_r != 0:
-        output_strict_1 = subprocess.run(
-            [
-                "nixpkgs-review",
-                "pr",
-                str(p_r),
-                "-p",
-                attr,
-                "--run",
-                f"echo -n 'STOREPATH=' && readlink -f ./results/{attr}",
-            ],
-            check=True,
-            stdout=subprocess.PIPE,
-        )
+        try:
+            output_strict_1 = subprocess.run(
+                [
+                    "nixpkgs-review",
+                    "pr",
+                    str(p_r),
+                    "-p",
+                    attr,
+                    "--run",
+                    f"echo -n 'STOREPATH=' && readlink -f ./results/{attr}",
+                ],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+        except subprocess.CalledProcessError as exc:
+            print("nixpkgs-review failed", exc.returncode, exc.output)
+            sys.exit(1)
+
         output_strict_2 = subprocess.run(
             ["grep", "^STOREPATH"],
             check=True,
