@@ -186,7 +186,7 @@ def main() -> None:
             print()
 
             subprocess.run(
-                ["diffoscope", output_path, outputs_strict_path], check=False
+                ["@diffoscope@", output_path, outputs_strict_path], check=False
             )
 
 

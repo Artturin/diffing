@@ -18,6 +18,8 @@
           isExecutable = true;
           strictexpr = ./assets/strict-expr.nix;
           expr = ./assets/expr.nix;
+          # Minimal diffoscope should be enough.
+          diffoscope = lib.getExe pkgs.diffoscopeMinimal;
           postInstall = ''
             sed -i '1 i#!${pkgs.python3.interpreter}' $out/bin/diffing
           '';
