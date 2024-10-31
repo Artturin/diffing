@@ -1,17 +1,20 @@
 {
   inputs = {
-    lib-aggregate = { url = "github:nix-community/lib-aggregate"; };
-    nixpkgs = { url = "github:NixOS/nixpkgs/nixos-unstable"; };
+    lib-aggregate = {
+      url = "github:nix-community/lib-aggregate";
+    };
+    nixpkgs = {
+      url = "github:NixOS/nixpkgs/nixos-unstable";
+    };
   };
 
-  outputs = inputs:
+  outputs =
+    inputs:
     let
       inherit (inputs.lib-aggregate) lib;
-    in
-    lib.flake-utils.eachDefaultSystem (system:
-      let
-        pkgs = inputs.nixpkgs.legacyPackages.${system};
-        script = pkgs.substituteAll {
+      diffingLambda =
+        pkgs:
+        pkgs.substituteAll {
           name = "diffing";
           src = ./diffing.py;
           dir = "bin";
@@ -24,8 +27,22 @@
             sed -i '1 i#!${pkgs.python3.interpreter}' $out/bin/diffing
           '';
         };
+    in
+    lib.flake-utils.eachDefaultSystem (
+      system:
+      let
+        pkgs = inputs.nixpkgs.legacyPackages.${system};
       in
       {
-        packages.default = script;
-      });
+        packages.default = diffingLambda pkgs;
+      }
+    )
+    // {
+
+      overlays.default = (
+        _: prev: {
+          diffing = diffingLambda prev;
+        }
+      );
+    };
 }
